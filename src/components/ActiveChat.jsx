@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, UserMinus, UserCheck, User } from 'lucide-react';
+import { Send, Phone, Video, UserMinus, UserCheck, User, PhoneIncoming } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import WebRTCModule from './WebRTCModule';
 
@@ -9,6 +9,7 @@ const ActiveChat = ({ chat, agentSocket }) => {
     const [input, setInput] = useState('');
     const [isCalling, setIsCalling] = useState(false);
     const [callType, setCallType] = useState(null);
+    const [incomingCall, setIncomingCall] = useState(null);
     const messagesEndRef = useRef();
 
     useEffect(() => {
@@ -21,10 +22,24 @@ const ActiveChat = ({ chat, agentSocket }) => {
             }
         });
 
+        agentSocket.on('incoming_call', (data) => {
+            if (data.sessionId === chat.sessionId) {
+                setIncomingCall(data);
+            }
+        });
+
         return () => {
             agentSocket.off('new_customer_message');
+            agentSocket.off('incoming_call');
         };
     }, [chat]);
+
+    const acceptCall = () => {
+        setCallType(incomingCall.type);
+        setIsCalling(true);
+        agentSocket.emit('call_accepted', { to: incomingCall.from, sessionId: chat.sessionId });
+        setIncomingCall(null);
+    };
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,6 +58,7 @@ const ActiveChat = ({ chat, agentSocket }) => {
     const startCall = (type) => {
         setCallType(type);
         setIsCalling(true);
+        agentSocket.emit('call_request', { sessionId: chat.sessionId, type });
     };
 
     const closeChat = () => {
@@ -133,6 +149,29 @@ const ActiveChat = ({ chat, agentSocket }) => {
                     </button>
                 </div>
             </form>
+
+            {/* Incoming Call Notification */}
+            {incomingCall && (
+                <div className="absolute top-24 left-6 right-6 p-4 glass-card bg-primary-600 rounded-2xl border border-white/20 shadow-2xl z-50 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-bounce">
+                            <PhoneIncoming size={20} className="text-white" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-white uppercase">Incoming {incomingCall.type} Call</p>
+                            <p className="text-[10px] text-white/70">Customer is calling you...</p>
+                        </div>
+                    </div>
+                    <div className="flex space-x-2">
+                        <button onClick={acceptCall} className="px-4 py-2 bg-green-500 text-white rounded-xl text-xs font-bold hover:bg-green-600 transition-all">
+                            Accept
+                        </button>
+                        <button onClick={() => setIncomingCall(null)} className="px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-all">
+                            Decline
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

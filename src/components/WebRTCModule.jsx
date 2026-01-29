@@ -20,36 +20,73 @@ const WebRTCModule = ({ chatId, type, socket, onClose }) => {
                     myVideo.current.srcObject = currentStream;
                 }
 
-                // Signal the customer that we want to start a call
-                socket.emit('call_request', { chatId, type });
+                // If we are already in the "accepted" state (meaning we are the receiver)
+                // we should wait for the offer.
+                // If we are the initiator, we wait for 'call_accepted'.
             });
 
         socket.on('call_accepted', (data) => {
-            const peer = new Peer({ initiator: true, trickle: false, stream });
+            // We are the initiator
+            const peer = new Peer({ initiator: true, trickle: true, stream });
 
             peer.on('signal', (signal) => {
-                socket.emit('webrtc_offer', { to: data.from, offer: signal });
-            });
-
-            peer.on('stream', (remoteStream) => {
-                setRemoteStream(remoteStream);
-                if (userVideo.current) {
-                    userVideo.current.srcObject = remoteStream;
+                if (signal.type === 'offer') {
+                    socket.emit('webrtc_offer', { to: data.from, offer: signal });
+                } else if (signal.candidate) {
+                    socket.emit('ice_candidate', { to: data.from, candidate: signal });
                 }
             });
 
-            socket.on('webrtc_answer', (answer) => {
-                peer.signal(answer);
+            peer.on('stream', (rStream) => {
+                setRemoteStream(rStream);
+                if (userVideo.current) userVideo.current.srcObject = rStream;
             });
 
+            socket.on('webrtc_answer', (data) => {
+                peer.signal(data.answer);
+            });
+
+            socket.on('ice_candidate', (data) => {
+                peer.signal(data.candidate);
+            });
+
+            connectionRef.current = peer;
+        });
+
+        socket.on('webrtc_offer', (data) => {
+            // We are the receiver
+            const peer = new Peer({ initiator: false, trickle: true, stream });
+
+            peer.on('signal', (signal) => {
+                if (signal.type === 'answer') {
+                    socket.emit('webrtc_answer', { to: data.from, answer: signal });
+                } else if (signal.candidate) {
+                    socket.emit('ice_candidate', { to: data.from, candidate: signal });
+                }
+            });
+
+            peer.on('stream', (rStream) => {
+                setRemoteStream(rStream);
+                if (userVideo.current) userVideo.current.srcObject = rStream;
+            });
+
+            socket.on('ice_candidate', (data) => {
+                peer.signal(data.candidate);
+            });
+
+            peer.signal(data.offer);
             connectionRef.current = peer;
         });
 
         return () => {
             if (stream) stream.getTracks().forEach(track => track.stop());
             if (connectionRef.current) connectionRef.current.destroy();
+            socket.off('call_accepted');
+            socket.off('webrtc_offer');
+            socket.off('webrtc_answer');
+            socket.off('ice_candidate');
         };
-    }, []);
+    }, [stream]);
 
     const toggleMute = () => {
         stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;

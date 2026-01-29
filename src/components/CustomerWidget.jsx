@@ -13,11 +13,27 @@ const CustomerWidget = () => {
     ]);
     const [input, setInput] = useState('');
     const [isEscalated, setIsEscalated] = useState(false);
+    const [agentName, setAgentName] = useState('');
     const [incomingCall, setIncomingCall] = useState(null);
     const [isCalling, setIsCalling] = useState(false);
     const [callType, setCallType] = useState(null);
     const socketRef = useRef();
     const chatEndRef = useRef();
+
+    const startCall = (type) => {
+        setCallType(type);
+        setIsCalling(true);
+        socketRef.current.emit('call_request', { sessionId, type });
+    };
+
+    const closeChat = () => {
+        if (window.confirm('Are you sure you want to end this chat?')) {
+            socketRef.current.emit('close_chat', { sessionId });
+            setIsEscalated(false);
+            setAgentName('');
+            setMessages(prev => [...prev, { sender: 'system', content: 'Chat ended.' }]);
+        }
+    };
 
     useEffect(() => {
         const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -115,9 +131,26 @@ const CustomerWidget = () => {
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
+                            <div className="flex space-x-2">
+                                {isEscalated && (
+                                    <>
+                                        <button onClick={() => startCall('voice')} className="p-2 text-slate-400 hover:text-white transition-colors">
+                                            <Phone size={18} />
+                                        </button>
+                                        <button onClick={() => startCall('video')} className="p-2 text-slate-400 hover:text-white transition-colors">
+                                            <Video size={18} />
+                                        </button>
+                                        <button onClick={closeChat} className="p-2 text-red-400 hover:text-red-300 transition-colors">
+                                            <X size={18} />
+                                        </button>
+                                    </>
+                                )}
+                                {!isEscalated && (
+                                    <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                                        <X size={20} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Messages */}
