@@ -9,22 +9,24 @@ const SupportLanding = () => {
     return (
         <div className="min-h-screen bg-[#020617] text-white selection:bg-primary-500/30">
             {/* Header / Nav */}
-            <nav className="fixed top-0 w-full z-50 glass-header border-b border-white/5 px-6 py-4 flex justify-between items-center backdrop-blur-xl">
-                <div className="flex items-center space-x-3">
+            <nav className="fixed top-0 w-full z-50 glass-header border-b border-white/5 px-4 md:px-8 py-4 flex justify-between items-center backdrop-blur-xl">
+                <div className="flex items-center space-x-2 md:space-x-3">
                     <img src="/logo.png" alt="LuminaSupport" className="w-8 h-8 rounded-lg" />
-                    <span className="text-xl font-bold font-display tracking-tight text-white">Lumina<span className="text-primary-500">Support</span></span>
+                    <span className="text-lg md:text-xl font-bold font-display tracking-tight text-white">
+                        Lumina<span className="text-primary-500 hidden xs:inline">Support</span>
+                    </span>
                 </div>
-                <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-400">
+                <div className="hidden lg:flex items-center space-x-8 text-sm font-medium text-slate-400">
                     <a href="#features" className="hover:text-white transition-colors">Features</a>
                     <a href="#ai" className="hover:text-white transition-colors">AI Engine</a>
                     <a href="#about" className="hover:text-white transition-colors">Platform</a>
                 </div>
                 <button
                     onClick={() => navigate('/login')}
-                    className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-bold transition-all flex items-center group"
+                    className="px-4 md:px-6 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs md:text-sm font-bold transition-all flex items-center group whitespace-nowrap"
                 >
-                    Admin & Agent Login
-                    <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    <span className="hidden sm:inline">Admin & Agent </span> Login
+                    <ArrowRight size={14} className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
             </nav>
 

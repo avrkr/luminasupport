@@ -18,6 +18,9 @@ export default {
             },
             backdropBlur: {
                 xs: '2px',
+            },
+            screens: {
+                'xs': '375px',
             }
         },
     },
