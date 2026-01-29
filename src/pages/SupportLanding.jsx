@@ -21,9 +21,10 @@ const SupportLanding = () => {
                 </div>
                 <button
                     onClick={() => navigate('/login')}
-                    className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-semibold transition-all"
+                    className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-bold transition-all flex items-center group"
                 >
-                    Agent Login
+                    Admin & Agent Login
+                    <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
             </nav>
 
